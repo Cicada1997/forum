@@ -1,0 +1,34 @@
+{% extends "base" %}
+
+{% block header %}{{ forum.name }}{% endblock %}
+
+{% block content %}
+<h2>Välkommen till {{ forum.name }}-forumet!</h2>
+<p>Spana in dessa läckra inlägg!</p>
+<p>Skriv ett eget inlägg: </p>
+{% if user %}
+<details>
+<summary>Skapa en post på {{ forum.name }}</summary>
+<form method="POST" action="/forum/{{ forum.id }}/create-post">
+  <label>titel</label>
+  <input type="text" name="title">
+  <label>innehåll</label>
+  <textarea type="text" name="content"></textarea>
+  <input type="submit" value="posta">
+</form>
+</details>
+{% else %}
+<p><a href="/auth">Logga in här</a> och lås upp möjligheten att ta del av härligheterna av forum på allvar!</p>
+{% endif %}
+
+{% for post in posts %}
+<a href="/forum/{{ forum.id }}">
+  <article class="forum-widget">
+    <h3>{{ post.name }}</h3>
+    {% for section in post.sections %}
+    <p>{{ section }}</p>
+    {% endfor %}
+  </article>
+</a>
+{% endfor %}
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends "base" %}
+
+{% block header %}Välkommen till sidan av forum!{% endblock %}
+
+{% block content %}
+<p>Kika in en av forumen nedan!</p>
+
+{% for forum in forums %}
+<a href="/forum/{{ forum.id }}">
+  <article class="forum-widget">
+    <h3>{{ forum.name }}</h3>
+    <p>{{ forum.description }}</p>
+  </article>
+</a>
+{% endfor %}
+
+{% endblock %}

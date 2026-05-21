@@ -1,0 +1,23 @@
+{% extends "base" %}
+
+{% block header %}Create forum{% endblock %}
+
+{% block content %}
+<h2>Engagerad och ivrig av gemenskapen? Skapa ett eget forum!</h2>
+
+{% if user %}
+<summary>Skicka in en ansökan om att starta ett eget forum nedan!</summary>
+<form method="POST" action="/create-forum">
+  <label>Forumets namn</label>
+  <input type="text" name="forum_name">
+  <label>Beskrivning</label>
+  <textarea type="text" name="description"></textarea>
+  <label>Motivera varför ditt forum bör finnas</label>
+  <textarea type="text" name="motivation"></textarea>
+  <input type="submit" value="posta">
+</form>
+{% else %}
+<p><a href="/auth">Logga in här</a> för att skapa ett eget forum, och lås upp möjligheten att ta del av härligheterna av forum på allvar!</p>
+{% endif %}
+
+{% endblock %}

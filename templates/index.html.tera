@@ -1,0 +1,16 @@
+{% extends "base" %}
+
+{% block header %}Forum åt folket!{% endblock %}
+{% block content %}
+<p>Var frälsad jordbo! Varmt välkommen till en knytpunkt för alla våra samlingsplatser - forum. Titta närmare på de <a href="/forums">här!</a></p>
+{% for post in posts %}
+<a href="/forum/{{ post.forum_id }}">
+  <article class="forum-widget">
+    <h3>{{ post.name }}</h3>
+    {% for section in post.sections %}
+    <p>{{ section }}</p>
+    {% endfor %}
+  </article>
+</a>
+{% endfor %}
+{% endblock %}

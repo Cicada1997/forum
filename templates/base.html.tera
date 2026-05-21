@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <title>{% block title %}{% endblock %}</title>
+
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+
+    <link rel="stylesheet" href="/css/all.css">
+
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <header>
+        <a id="logo-link" href="/"><img id="logo" src="/favicon.ico"></a>
+        <div id="header"><h1>{% block header %}{% endblock %}</h1></div>
+        <nav>
+            <ul>
+                <li><a class="current" href="/">Hem</a></li>
+                <li><a class="current" href="/forums">forum</a></li>
+                <li><a class="current" href="/auth">auth</a></li>
+                {% if user %}
+                {% if user.admin %}
+                <li><a class="current" href="/admin/panel">adminpanelen</a></li>
+                {% endif %}
+                {% endif %}
+                {# <li><a class="current" href="/create-forum">create a forum!</a></li> #}
+
+                {% if links %}
+                {% for link in links %}
+                <li><a href="{{ link.path }}">{{ link.name }}</a></li>
+                {% endfor %}
+                {% endif %}
+            </ul>
+        </nav>
+
+    </header>
+
+    {% block description %}{% endblock %}
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    <footer><p>
+        Cicada i stolt samarbete med <a href="https://kattmys.se">Kattmysnätverket©</a>.
+    </p></footer>
+</body>
+</html>

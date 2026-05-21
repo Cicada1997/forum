@@ -1,0 +1,12 @@
+{% extends "base" %}
+
+{% block header %}Auth{% endblock %}
+
+{% block content %}
+<p>Har du en token? sätt in nedan!</p>
+<form method="POST" action="/set-token">
+  <input type="text" name="0">
+  <input type="submit" value="set cookie token">
+</form>
+
+{% endblock %}

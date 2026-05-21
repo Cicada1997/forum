@@ -1,0 +1,31 @@
+{% extends "base" %}
+
+{% block header %}Adminpanelen{% endblock %}
+
+{% block content %}
+<h2>Ansökningar angående forum</h2>
+{% for request in requests %}
+<article class="forum-widget">
+    <table>
+    {% if request.description %}
+    <tr>
+      <td><h3>{{ request.forum_name }}</h3></td>
+      <td><h3>author: user_{{ request.author_id }}</h3></td>
+    </tr>
+    <tr>
+      <td>Beskrivning</td>
+      <td>{{ request.description }}</td>
+    </tr>
+    {% endif %}
+    <tr>
+      <td>Motivering</td>
+      <td>{{ request.motivation }}</td>
+    </tr>
+    <tr>
+      <td>{{ request.submission }}</td>
+    </tr>
+  </table>
+
+</article>
+{% endfor %}
+{% endblock %}
