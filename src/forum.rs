@@ -3,7 +3,6 @@ use {
         Db,
 
         model::{
-            Forum,
             Post,
         },
     },

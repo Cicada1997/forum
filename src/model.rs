@@ -1,8 +1,5 @@
 use {
-    rocket_db_pools::sqlx::{
-        FromRow,
-        Type,
-    },
+    std::str::FromStr,
 
     chrono::{
         NaiveDateTime
@@ -10,6 +7,12 @@ use {
 
     serde::{ Serialize, Deserialize },
 
+    rocket::request::FromParam,
+
+    rocket_db_pools::sqlx::{
+        FromRow,
+        Type,
+    },
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
@@ -31,6 +34,7 @@ pub struct CommentId(i64);
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct Forum {
     pub id: ForumId,
+    pub author_id: UserId,
     pub name: String,
     pub description: String,
 }
@@ -53,15 +57,46 @@ pub struct Comment {
     pub content: String,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+#[sqlx(type_name = "request_status", rename_all = "lowercase")]
+pub enum RequestStatus {
+    Accepted,
+    Pending,
+    Denied,
+}
+
+impl FromStr for RequestStatus {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "accepted" => Ok(RequestStatus::Accepted),
+            "pending"  => Ok(RequestStatus::Pending),
+            "denied"   => Ok(RequestStatus::Denied),
+            _ => Err(()),
+        }
+    }
+}
+
+impl<'r> FromParam<'r> for RequestStatus {
+    type Error = ();
+
+    fn from_param(param: &'r str) -> Result<Self, Self::Error> {
+        RequestStatus::from_str(param).map_err(|_| ())
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct ForumRequest {
-    id: ForumId,
-    author_id: UserId,
+    pub id: ForumId,
+    pub author_id: UserId,
 
-    forum_name: String,
-    description: Option<String>,
+    pub forum_name: String,
+    pub description: Option<String>,
 
-    motivation: String,
-    submission: NaiveDateTime,
+    pub motivation: String,
+    pub submission: NaiveDateTime,
+
+    pub status: RequestStatus,
 }
 

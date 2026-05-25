@@ -12,6 +12,7 @@ use {
             Forum,
             Post,
             ForumRequest,
+            RequestStatus,
         },
         auth::AuthenticatedUser,
     },
@@ -20,7 +21,7 @@ use {
         Database,
         Connection,
 
-        sqlx::{self, PgPool}
+        sqlx::{self, PgPool, Row}
     },
 
     rocket_dyn_templates::{Template, context},
@@ -190,10 +191,56 @@ async fn admin_panel(user: AuthenticatedUser, mut db: Connection<Db>) -> Result<
     Ok(Template::render("admin_panel", context! { user, requests }))
 }
 
-#[catch(401)]
-async fn forbidden(request: &Request<'_>) -> &'static str {
-    "Nämen nu blev det allt lite lurt!, här är du inte välkommen"
+#[post("/admin/forum_req/<id>/approve/<status>")]
+async fn admin_forum_req_trial(id: i64, status: RequestStatus, user: AuthenticatedUser, mut db: Connection<Db>) -> Result<Redirect, Status> {
+    if !user.admin {
+        return Err(Status::Forbidden);
+    }
+
+    match status {
+        RequestStatus::Accepted => {
+            println!("Inserting forum in database...");
+            let approved_request: ForumRequest = sqlx::query_as(
+                r#"
+                    UPDATE forum_requests
+                    SET status = 'accepted'
+                    WHERE id = $1
+                "#)
+                .bind(id)
+                .fetch_one(&mut **db)
+                .await
+                .expect("Unable to update request to accepted, aborting.");
+
+            let res_id: i64 = sqlx::query(r#"
+                    INSERT INTO forums (name, description, author_id) VALUES ($1, $2, $3) RETURNING id
+                "#)
+                .bind(approved_request.forum_name)
+                .bind(approved_request.description)
+                .bind(approved_request.author_id)
+                .fetch_one(&mut **db)
+                .await
+                .expect("Unable to insert new forum into database, aborting.")
+                .get("id");
+
+            return Ok(Redirect::to(format!("/forum/{}", res_id)));
+
+            
+        }
+        RequestStatus::Denied => {
+            println!("Updating database as follows...");
+        }
+        RequestStatus::Pending => {
+            return Err(Status::BadRequest);
+        }
+    }
+
+    Ok(Redirect::to(uri!("/")))
 }
+
+// #[catch(401)]
+// async fn forbidden(request: &Request<'_>) -> &'static str {
+//     "Nämen nu blev det allt lite lurt!, här är du inte välkommen"
+// }
 
 #[catch(401)]
 async fn kattauth_redirect(request: &Request<'_>) -> Redirect {
@@ -235,12 +282,13 @@ fn rocket() -> _ {
             forum_request_site,
             create_forum_request,
             admin_panel,
+            admin_forum_req_trial,
         ])
 
-        // .mount("/css", FileServer::from(relative!("/templates/css")))
         .mount("/", routes![favicon, favicon_png])
 
 
         .register("/", catchers![not_found, kattauth_redirect])
+
         .mount("/", FileServer::from(relative!("/static")))
 }
