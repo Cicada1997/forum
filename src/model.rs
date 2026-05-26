@@ -18,14 +18,20 @@ use {
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 #[sqlx(transparent)]
 pub struct ForumId(i64);
+impl From<i64> for ForumId { fn from(v: i64) -> Self { ForumId(v) } }
+impl From<ForumId> for i64 { fn from(f: ForumId) -> Self { f.0 } }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 #[sqlx(transparent)]
 pub struct UserId(i64);
+impl From<i64> for UserId { fn from(v: i64) -> Self { UserId(v) } }
+impl From<UserId> for i64 { fn from(f: UserId) -> Self { f.0 } }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 #[sqlx(transparent)]
 pub struct PostId(i64);
+impl From<i64> for PostId { fn from(v: i64) -> Self { PostId(v) } }
+impl From<PostId> for i64 { fn from(f: PostId) -> Self { f.0 } }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 #[sqlx(transparent)]
@@ -53,7 +59,7 @@ pub struct Comment {
     pub id: CommentId,
     pub post: PostId,
     pub author_id: UserId,
-    pub parent: CommentId,
+    pub parent: Option<CommentId>,
     pub content: String,
 }
 

@@ -109,11 +109,10 @@ async fn create_post(user: AuthenticatedUser, id: i64, form: Form<NewPostForm>, 
         .filter(|s| !s.is_empty())
         .collect();
 
-    sqlx::query("INSERT INTO posts (forum_id, author_uid, name, sections) VALUES ($1, $2, $3, $4)")
-        .bind(id)
-        .bind(user.user_id)
-        .bind(form.title.clone())
-        .bind(sections)
+    sqlx::query!(
+        "INSERT INTO posts (forum_id, author_uid, name, sections) VALUES ($1, $2, $3, $4)",
+        id, user.user_id, form.title.clone(), &sections,
+    )
         .execute(&mut **db)
         .await
         .unwrap();
@@ -123,15 +122,15 @@ async fn create_post(user: AuthenticatedUser, id: i64, form: Form<NewPostForm>, 
 
 #[get("/forum/<id>")]
 async fn site_forum(user: Option<AuthenticatedUser>, id: i64, mut db: Connection<Db>) -> Template {
-    let forum: Forum = sqlx::query_as("SELECT * FROM forums WHERE id = $1")
-        .bind(id)
+    let forum = sqlx::query_as!(Forum, "SELECT * FROM forums WHERE id = $1", id)
         .fetch_one(&mut **db)
         .await
         .unwrap();
 
-    let posts: Vec<Post> = sqlx::query_as::<_, Post>("SELECT * FROM posts WHERE forum_id = $1 ORDER BY name LIMIT $2")
-        .bind(id)
-        .bind(10)
+    let posts = sqlx::query_as!(
+        Post,
+        "SELECT * FROM posts WHERE forum_id = $1 ORDER BY name LIMIT $2",
+        id, 10)
         .fetch_all(&mut **db)
         .await
         .unwrap();
@@ -158,15 +157,16 @@ async fn forum_request_site(user: Option<AuthenticatedUser>) -> Template {
 
 #[post("/create-forum", data="<request>")]
 async fn create_forum_request(user: AuthenticatedUser, request: Form<ForumRequestForm>, mut db: Connection<Db>) -> Redirect {
-    let res = sqlx::query(r#"
+    let res = sqlx::query!(r#"
         INSERT INTO forum_requests
         (author_id, forum_name, description, motivation)
         VALUES ($1, $2, $3, $4)
-    "#)
-        .bind(user.user_id)
-        .bind(request.forum_name.clone())
-        .bind(request.description.clone())
-        .bind(request.motivation.clone())
+    "#,
+        user.user_id,
+        request.forum_name.clone(),
+        request.description.clone(),
+        request.motivation.clone()
+    )
         .execute(&mut **db)
         .await;
 
@@ -200,35 +200,38 @@ async fn admin_forum_req_trial(id: i64, status: RequestStatus, user: Authenticat
     match status {
         RequestStatus::Accepted => {
             println!("Inserting forum in database...");
-            let approved_request: ForumRequest = sqlx::query_as(
-                r#"
-                    UPDATE forum_requests
+            let approved_request: ForumRequest = sqlx::query_as!(
+                ForumRequest,
+                r#" UPDATE forum_requests
                     SET status = 'accepted'
                     WHERE id = $1
-                "#)
-                .bind(id)
+                    RETURNING id, author_id, forum_name, description, motivation, submission, status AS "status: RequestStatus" "#,
+                id
+            )
                 .fetch_one(&mut **db)
                 .await
                 .expect("Unable to update request to accepted, aborting.");
 
-            let res_id: i64 = sqlx::query(r#"
-                    INSERT INTO forums (name, description, author_id) VALUES ($1, $2, $3) RETURNING id
-                "#)
-                .bind(approved_request.forum_name)
-                .bind(approved_request.description)
-                .bind(approved_request.author_id)
+            let res_id: i64 = sqlx::query!(
+                r#" INSERT INTO forums (name, description, author_id)
+                    VALUES ($1, $2, $3)
+                    RETURNING id "#,
+                approved_request.forum_name,
+                approved_request.description,
+                Into::<i64>::into(approved_request.author_id): i64
+            )
                 .fetch_one(&mut **db)
                 .await
                 .expect("Unable to insert new forum into database, aborting.")
-                .get("id");
+                .id;
 
-            return Ok(Redirect::to(format!("/forum/{}", res_id)));
-
-            
+            return Ok(Redirect::to(format!("/forums/{}", res_id)));
         }
+
         RequestStatus::Denied => {
             println!("Updating database as follows...");
         }
+
         RequestStatus::Pending => {
             return Err(Status::BadRequest);
         }

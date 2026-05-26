@@ -9,7 +9,7 @@ use {
 
 #[derive(Serialize, Deserialize)]
 pub struct AuthenticatedUser {
-    pub user_id:    i32,
+    pub user_id:    i64,
     pub username:   String,
     pub admin:      bool,
 }
